@@ -12,6 +12,8 @@ namespace RallyKnowledgeOwlIntegration
             var rally = new RallyDataService();
             var result = rally.LoadStoriesAndDefects();
 
+            var knowledgeOwl = new KnowledgeOwlDataService();
+            knowledgeOwl.UpdateBacklogArticle(result);
         }
     }
 }

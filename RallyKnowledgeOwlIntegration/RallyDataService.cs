@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Rally.RestApi;
@@ -14,48 +13,74 @@ namespace RallyKnowledgeOwlIntegration
             string serverUrl = "https://rally1.rallydev.com";
 
             var restApi = new RallyRestApi();
-            var authenticationResult = restApi.AuthenticateWithApiKey(apiKey, serverUrl);
+            restApi.AuthenticateWithApiKey(apiKey, serverUrl);
 
-            //Query for items
-            var results = new List<dynamic>();
-
-            var stories = QueryArtifact(restApi, "SchedulableArtifact");
-            results.AddRange(stories);
-
-            return results;
+            // TODO: Get Current and Previous Sprints from Rally
+            var sprints = new List<string> {"S1", "S2"};
+            
+            var results = QueryArtifact(restApi, "SchedulableArtifact", sprints);            
+            return results.ToList();
         }
 
-        private IEnumerable<dynamic> QueryArtifact(RallyRestApi restApi, string artifactType, int start = 1)
+        private IEnumerable<dynamic> QueryArtifact(RallyRestApi restApi, string artifactType, List<string> iterations, int start = 1)
         {
             var request = new Request(artifactType);
             // TODO: Need iteration name, and rank (is this DragAndDropRank?)
             request.Fetch = new List<string>() {"Name", "FormattedID", "ScheduleState", "c_CrossroadsKanbanState", "Priority", "c_PriorityUS", "Iteration" };
-                        
-            // TODO: Needs cleanup, possibly use request.Query.And(), use constants for TypeDefOid
-            var query = "((c_ProdSupportTeam = true) AND ((TypeDefOid = 22244455275) OR (TypeDefOid = 22244455200)))";
-            request.Query = new Query(query);
+
+            request.Query = GetDefectAndStoryQuery(iterations);
 
             request.ProjectScopeDown = true;
             request.ProjectScopeUp = true;
-            request.Start = start;
 
+            var results = LoadResults(restApi, request, 1);
+            return results;
+        }
+
+        public IEnumerable<dynamic> LoadResults(RallyRestApi restApi, Request request, int start = 1)
+        {
+            Console.WriteLine("Running query {0}", request.Query.QueryClause);
+
+            request.Start = start;
             var queryResult = restApi.Query(request);
+            Console.WriteLine("Query returned {0} entries", queryResult.TotalResultCount);
+
             if (!queryResult.Success)
             {
                 var errors = string.Join("\n", queryResult.Errors.Select(x => x.ToString()).ToList());
-                var message = string.Format("Failed to query {0} from Rally due to errors: {1}", artifactType, errors);
+                var message = string.Format("Failed to query Rally due to errors: {1}", errors);
                 throw new Exception(message);
             }
 
-            if (queryResult.TotalResultCount < queryResult.StartIndex + queryResult.Results.Count())
+            var currentResults = queryResult.Results.ToList();
+            if (queryResult.TotalResultCount < queryResult.StartIndex + currentResults.Count())
             {
-                return queryResult.Results;
+                return currentResults;
             }
 
             // TODO: Recursive call to get next batch of results
-            var recursiveResults = QueryArtifact(restApi, artifactType, start + request.PageSize);
+            var recursiveResults = LoadResults(restApi, request, start + request.PageSize);
 
-            return recursiveResults.Concat(queryResult.Results);            
+            return currentResults.Concat(recursiveResults);
+        }
+
+        private static Query GetDefectAndStoryQuery(List<string> iterations)
+        {
+            var defectQuery = new Query("TypeDefOid", Query.Operator.Equals, "22244455275");
+            var userStoriesQuery = new Query("TypeDefOid", Query.Operator.Equals, "22244455200");
+
+            var prodSupportQuery = new Query("c_ProdSupportTeam", Query.Operator.Equals, "true");
+
+            var allIterations = new Query("Iteration.Name", Query.Operator.Equals, "");
+            foreach (var iteration in iterations)
+            {
+                var sprintsQuery = new Query("Iteration", Query.Operator.Equals, iteration);
+                allIterations.Or(sprintsQuery);
+            }
+
+            var backlogQuery = defectQuery.Or(userStoriesQuery);
+            var completeQuery = prodSupportQuery.And(backlogQuery).And(allIterations);
+            return completeQuery;
         }
     }
 }

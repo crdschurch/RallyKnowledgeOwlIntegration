@@ -14,17 +14,42 @@ namespace RallyKnowledgeOwlIntegration
 
             var restApi = new RallyRestApi();
             restApi.AuthenticateWithApiKey(apiKey, serverUrl);
+                        
+            var iterations = QueryIterations(restApi);
 
-            // TODO: Get Current and Previous Sprints from Rally
-            var sprints = new List<string> {"S1", "S2"};
-            
-            var results = QueryArtifact(restApi, "SchedulableArtifact", sprints);            
+            var results = QueryArtifact(restApi, iterations);
             return results.ToList();
         }
 
-        private IEnumerable<dynamic> QueryArtifact(RallyRestApi restApi, string artifactType, List<string> iterations, int start = 1)
+        private IEnumerable<string> QueryIterations(RallyRestApi restApi)
         {
-            var request = new Request(artifactType);
+            var request = new Request("Iterations");
+            request.Fetch = new List<string>() { "Name" };
+
+            var twoWeeksAgo = DateTime.Today.AddDays(-14).ToString("O");
+            var dateQuery = new Query("EndDate", Query.Operator.GreaterThanOrEqualTo, twoWeeksAgo);
+            var projectQuery = new Query("Project.Name", Query.Operator.Equals, "Ministry Platform");
+
+            var completeQuery = dateQuery.And(projectQuery);
+            request.Query = completeQuery;
+
+            request.ProjectScopeDown = true;
+            request.ProjectScopeUp = true;
+
+            var results = LoadResults(restApi, request);
+            var iterations = new List<string>();
+
+            foreach (var result in results)
+            {
+                iterations.Add(result.Name);
+            }
+
+            return iterations;
+        }
+
+        private IEnumerable<dynamic> QueryArtifact(RallyRestApi restApi, IEnumerable<string> iterations)
+        {
+            var request = new Request("SchedulableArtifact");
             // TODO: Need iteration name, and rank (is this DragAndDropRank?)
             request.Fetch = new List<string>() {"Name", "FormattedID", "ScheduleState", "c_CrossroadsKanbanState", "Priority", "c_PriorityUS", "Iteration" };
 
@@ -64,7 +89,7 @@ namespace RallyKnowledgeOwlIntegration
             return currentResults.Concat(recursiveResults);
         }
 
-        private static Query GetDefectAndStoryQuery(List<string> iterations)
+        private Query GetDefectAndStoryQuery(IEnumerable<string> iterations)
         {
             var defectQuery = new Query("TypeDefOid", Query.Operator.Equals, "22244455275");
             var userStoriesQuery = new Query("TypeDefOid", Query.Operator.Equals, "22244455200");

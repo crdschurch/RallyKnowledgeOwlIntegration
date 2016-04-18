@@ -5,43 +5,49 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using RestSharp;
+using RestSharp.Authenticators;
 
 namespace RallyKnowledgeOwlIntegration
 {
     class KnowledgeOwlDataService
     {
+
         public void UpdateBacklogArticle(List<dynamic> result)
         {
-            //TODO connect to Knowledge Owl
-            // KO API key = 5616973c32131cf20f30cc56
-            // Passed via HTTP Basic Authentication in the username field
-            // Any dummy password, can be used for the password field
-            // project_id = 55d778fd32131c204151f217
+            //TODO pull out constants
+            var knowledgeOwlRestClient = new RestClient("https://app.knowledgeowl.com/api/head/");
+            knowledgeOwlRestClient.Authenticator = new HttpBasicAuthenticator("5616973c32131cf20f30cc56", "AnyFooBarPassword");
+            if (knowledgeOwlRestClient == null) throw new ArgumentNullException(nameof(knowledgeOwlRestClient));
 
-            //TODO pull out constant - Article ID
-            UpdateBacklogArticle("570fc7b291121c14364aeb65", result);
-        }
+            var urlGet = string.Format("article/{0}.json", "570ff4c732131cdb44804aea");
+            var requestGet = new RestRequest(urlGet, Method.GET);
+            requestGet.AddParameter("project_id", "55d778fd32131c204151f217");
 
-        public void UpdateBacklogArticle(string articleId, List<dynamic> result)
-        {
-            //TODO load existing System Development Backlog article from knowledge owl
-            // GET https://app.knowledgeowl.com/api/head/article/570ff4c732131cdb44804aea.json
-            var urlGet = string.Format("https://app.knowledgeowl.com/api/head/article/{0}.json", articleId);
-            
-            ArticleDto articleDto = new ArticleDto();
+            var responseGet = knowledgeOwlRestClient.Execute(requestGet);
+            //var article = knowledgeOwlRestClient.Execute<ArticleDto>(requestGet);
 
-            //TODO build html article body from Rally results
-            articleDto.CurrentVersion = "newly built html string using rally result List";
+            //TODO JSON mapping not working??
+            var article = new ArticleDto();
+            //JsonConvert.PopulateObject(responseGet.Content, article);
+            article = JsonConvert.DeserializeObject<ArticleDto>(responseGet.Content);
 
-            //TODO update exisitng article body html (current_version field) with newly built html string                  
+            //TODO build html article html table for article body from Rally results
+            article.CurrentVersion = "newly built html string using rally result List";
+
+            //TODO update exisitng article (current_version/text field) with newly built html string                  
             // PUT https://app.knowledgeowl.com/api/head/article/570ff4c732131cdb44804aea.json
             /* {
                 "current_version":
                 "<p>THIS IS AN UPDATED TEST - Body of article.</p>"                
                }            
             */
-            var urlPut = string.Format("https://app.knowledgeowl.com/api/head/article/{0}.json", articleId);
-
+            //var urlPut = string.Format("article/{0}.json", "570ff4c732131cdb44804aea");
+            //var requestPut = new RestRequest(urlPut, Method.PUT);
+            //requestPut.AddParameter("project_id", "55d778fd32131c204151f217");
+            //add other parameters/body
+            //var responsePut = knowledgeOwlRestClient.Execute(requestPut);
         }
     }
 }

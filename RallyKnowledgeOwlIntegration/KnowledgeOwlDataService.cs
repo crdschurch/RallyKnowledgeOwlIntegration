@@ -1,11 +1,5 @@
 ﻿using System;
-using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
 using RestSharp;
 using RestSharp.Authenticators;
 
@@ -13,41 +7,30 @@ namespace RallyKnowledgeOwlIntegration
 {
     class KnowledgeOwlDataService
     {
-
         public void UpdateBacklogArticle(List<dynamic> result)
         {
-            //TODO pull out constants
+            //TODO pull out constants - URL, API key used to authenticate, and article ID (used in PUT)
             var knowledgeOwlRestClient = new RestClient("https://app.knowledgeowl.com/api/head/");
             knowledgeOwlRestClient.Authenticator = new HttpBasicAuthenticator("5616973c32131cf20f30cc56", "AnyFooBarPassword");
             if (knowledgeOwlRestClient == null) throw new ArgumentNullException(nameof(knowledgeOwlRestClient));
 
-            var urlGet = string.Format("article/{0}.json", "570ff4c732131cdb44804aea");
-            var requestGet = new RestRequest(urlGet, Method.GET);
-            requestGet.AddParameter("project_id", "55d778fd32131c204151f217");
+            //TODO Get verbaige from OCM to put at top of article
+            var header = "{\"current_version\":\"<p>SARA TESTING NEW DEVELOPMENT (Placehoder text from OCM to describe the article.)</p><p></p><table align = 'center' border = '1' bordercolor = '#ccc' cellpadding = '5' cellspacing = '0' class='table table-small-font table-condensed table-bordered table-responsive' style='border-collapse:collapse;'><thead><tr><th scope = 'col'>ID</th><th scope='col'>Name&nbsp;</th><th scope = 'col' >Status&nbsp;</th><th scope = 'col'> Iteration</th><th scope='col'>Target Deployment Date</th></tr></thead><tbody>";
+            var table = "";
+            var footer = "</tbody></table>\"}";   
 
-            var responseGet = knowledgeOwlRestClient.Execute(requestGet);
-            //var article = knowledgeOwlRestClient.Execute<ArticleDto>(requestGet);
-
-            //TODO JSON mapping not working??
-            var article = new ArticleDto();
-            //JsonConvert.PopulateObject(responseGet.Content, article);
-            article = JsonConvert.DeserializeObject<ArticleDto>(responseGet.Content);
-
-            //TODO build html article html table for article body from Rally results
-            article.CurrentVersion = "newly built html string using rally result List";
-
-            //TODO update exisitng article (current_version/text field) with newly built html string                  
-            // PUT https://app.knowledgeowl.com/api/head/article/570ff4c732131cdb44804aea.json
-            /* {
-                "current_version":
-                "<p>THIS IS AN UPDATED TEST - Body of article.</p>"                
-               }            
-            */
-            //var urlPut = string.Format("article/{0}.json", "570ff4c732131cdb44804aea");
-            //var requestPut = new RestRequest(urlPut, Method.PUT);
-            //requestPut.AddParameter("project_id", "55d778fd32131c204151f217");
-            //add other parameters/body
-            //var responsePut = knowledgeOwlRestClient.Execute(requestPut);
+            //TODO Make sure Iteration, status and Release Date come back from Rally inside of result list                    
+            foreach (var item in result)
+            {                
+                table += "<tr><td>" + item["FormattedID"] + "</td><td>" + item["Name"] + "</td><td>?Status?</td><td>" + item["Iteration"] +"</td><td>?Date?</td></tr>"; 
+            }
+            var body = header + table.Replace("\"", "'") + footer;
+            
+            var urlPut = string.Format("article/{0}.json", "5715678132131c081e6a242a");
+            var requestPut = new RestRequest(urlPut, Method.PUT);
+            requestPut.RequestFormat = DataFormat.Json;
+            requestPut.AddParameter("application/json", body, ParameterType.RequestBody);
+            knowledgeOwlRestClient.Execute(requestPut);
         }
     }
 }

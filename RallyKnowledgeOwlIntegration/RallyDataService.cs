@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
 using Rally.RestApi;
+using RallyKnowledgeOwlIntegration.Helpers;
 
 namespace RallyKnowledgeOwlIntegration
 {
     public class RallyDataService
     {
-        public IEnumerable<RallyArtifact> LoadStoriesAndDefects()
+        public IList<RallyArtifact> LoadStoriesAndDefects()
         {
             string apiKey = Environment.GetEnvironmentVariable("RALLY_API_KEY");
             string serverUrl = "https://rally1.rallydev.com";
@@ -19,7 +20,7 @@ namespace RallyKnowledgeOwlIntegration
             var iterations = QueryIterations(restApi);
             var artifacts = QueryArtifact(restApi, iterations);
 
-            processResults(artifacts, iterations);
+            ProcessResults(artifacts, iterations);
             return artifacts;
         }
 
@@ -38,24 +39,9 @@ namespace RallyKnowledgeOwlIntegration
             request.ProjectScopeDown = true;
             request.ProjectScopeUp = true;
 
-            var results = LoadResults(restApi, request);
-            var iterations = MapToListObjects<RallyIteration>(results);
+            var results = RallyApiHelper.LoadResults(restApi, request);
+            var iterations = AutoMapperHelper.MapToListObjects<RallyIteration>(results);
 
-            return iterations;
-        }
-
-        private static List<T> MapToListObjects<T>(IEnumerable<dynamic> results)
-        {
-            var iterations = new List<T>();
-
-            var config = new MapperConfiguration(cfg => { });
-            var mapper = config.CreateMapper();
-
-            foreach (var result in results)
-            {
-                var iteration = mapper.Map<T>(result);
-                iterations.Add(iteration);
-            }
             return iterations;
         }
 
@@ -69,13 +55,12 @@ namespace RallyKnowledgeOwlIntegration
             request.ProjectScopeDown = true;
             request.ProjectScopeUp = true;
 
-            var results = LoadResults(restApi, request, 1);
-
-            var artifacts = MapToListObjects<RallyArtifact>(results);
+            var results = RallyApiHelper.LoadResults(restApi, request);
+            var artifacts = AutoMapperHelper.MapToListObjects<RallyArtifact>(results);
             return artifacts;
         }
 
-        private void processResults(IEnumerable<RallyArtifact> results, IEnumerable<RallyIteration> iterations)
+        private void ProcessResults(IList<RallyArtifact> results, IList<RallyIteration> iterations)
         {
             foreach (var result in results)
             {
@@ -83,7 +68,7 @@ namespace RallyKnowledgeOwlIntegration
             }
         }
 
-        private string MapStatus(RallyArtifact artifact, IEnumerable<RallyIteration> iterations)
+        private string MapStatus(RallyArtifact artifact, IList<RallyIteration> iterations)
         {
             var state = (string) artifact.c_CrossroadsKanbanState;
             switch (state)
@@ -95,7 +80,7 @@ namespace RallyKnowledgeOwlIntegration
                     return "In-Progress";
                     
                 case "Done":
-                    // TODO: What should we if iteration is null, it would be in this list always
+                    // TODO: What should we do if iteration is null, it would be in this list always
                     if (artifact.Iteration == null)
                     {
                         return "Deployed";
@@ -118,33 +103,6 @@ namespace RallyKnowledgeOwlIntegration
                 default:
                     return "Backlog";
             }
-        }
-
-        public IEnumerable<dynamic> LoadResults(RallyRestApi restApi, Request request, int start = 1)
-        {
-            Console.WriteLine("Running query {0} starting at {1}", request.Query.QueryClause, start);
-
-            request.Start = start;
-            var queryResult = restApi.Query(request);
-            Console.WriteLine("Query has {0} total matches, this batch has {1} entries", queryResult.TotalResultCount, queryResult.Results.Count());
-
-            if (!queryResult.Success)
-            {
-                var errors = string.Join("\n", queryResult.Errors.Select(x => x.ToString()).ToList());
-                var message = string.Format("Failed to query Rally due to errors: {1}", errors);
-                throw new Exception(message);
-            }
-
-            var currentResults = queryResult.Results.ToList();
-            if (queryResult.TotalResultCount < queryResult.StartIndex + currentResults.Count())
-            {
-                return currentResults;
-            }
-
-            // TODO: Recursive call to get next batch of results
-            var recursiveResults = LoadResults(restApi, request, start + request.PageSize);
-
-            return currentResults.Concat(recursiveResults);
         }
 
         private Query GetDefectAndStoryQuery(IEnumerable<RallyIteration> iterations)

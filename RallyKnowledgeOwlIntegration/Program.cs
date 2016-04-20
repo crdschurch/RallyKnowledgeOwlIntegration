@@ -1,4 +1,4 @@
-﻿using System.Linq;
+﻿using RallyKnowledgeOwlIntegration.Helpers;
 
 namespace RallyKnowledgeOwlIntegration
 {

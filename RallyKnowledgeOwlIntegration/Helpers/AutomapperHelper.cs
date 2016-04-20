@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using AutoMapper;
 
 namespace RallyKnowledgeOwlIntegration.Helpers
@@ -11,17 +7,15 @@ namespace RallyKnowledgeOwlIntegration.Helpers
     {
         public static List<T> MapToListObjects<T>(IEnumerable<dynamic> results)
         {
-            var iterations = new List<T>();
-
-            var config = new MapperConfiguration(cfg => { });
-            var mapper = config.CreateMapper();
+            var items = new List<T>();
 
             foreach (var result in results)
             {
-                var iteration = mapper.Map<T>(result);
-                iterations.Add(iteration);
+                var item = Mapper.Map<T>(result.ToDictionary());
+                items.Add(item);
             }
-            return iterations;
+
+            return items;
         }
     }
 }

@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using AutoMapper;
 using Rally.RestApi;
 using RallyKnowledgeOwlIntegration.Helpers;
+using RallyKnowledgeOwlIntegration.Models;
 
 namespace RallyKnowledgeOwlIntegration
 {
     public class RallyDataService
     {
-        public IList<RallyArtifact> LoadStoriesAndDefects()
+        public RallyArtifactsByState LoadArtifactsByState()
         {
             string apiKey = Environment.GetEnvironmentVariable("RALLY_API_KEY");
             string serverUrl = "https://rally1.rallydev.com";
@@ -21,13 +21,45 @@ namespace RallyKnowledgeOwlIntegration
             var artifacts = QueryArtifact(restApi, iterations);
 
             ProcessResults(artifacts, iterations);
-            return artifacts;
+
+            var artifactsByState = GroupByStates(artifacts, iterations);
+            return artifactsByState;
+        }
+
+        private RallyArtifactsByState GroupByStates(IList<RallyArtifact> artifacts, IList<RallyIteration> iterations)
+        {
+            var artifactsByState = new RallyArtifactsByState();
+
+            //var allItemsWithIteration = artifacts.Where(x => String.IsNullOrWhiteSpace(x.IterationName) == false);
+
+            // TODO: Determine if we need to use offset here
+            var previous = iterations.Where(x => x.EndDate < DateTime.Today).Select(x => x.Name);
+            artifactsByState.PreviousIterations = artifacts.Where(x => previous.Contains(x.IterationName)).ToList();
+
+            // TODO: Determine if we need to use offset here
+            var current =
+                iterations.Where(x => x.EndDate >= DateTime.Today &&
+                                      x.StartDate <= DateTime.Today).Select(x => x.Name);
+
+            artifactsByState.CurrentIteration =
+                artifacts.Where(x =>
+                {
+                    Console.WriteLine(x.IterationName);
+                    return current.Contains(x.IterationName);
+                }).ToList();
+
+            artifactsByState.Backlog =
+                artifacts.Where(x => previous.Contains(x.IterationName) == false &&
+                                     current.Contains(x.IterationName) == false)
+                    .ToList();
+
+            return artifactsByState;
         }
 
         private IList<RallyIteration> QueryIterations(RallyRestApi restApi)
         {
             var request = new Request("Iterations");
-            request.Fetch = new List<string>() { "Name", "EndDate" };            
+            request.Fetch = new List<string>() {"Name", "EndDate", "StartDate"};
 
             var twoWeeksAgo = DateTime.Today.AddDays(-14).ToString("O");
             var dateQuery = new Query("EndDate", Query.Operator.GreaterThanOrEqualTo, twoWeeksAgo);
@@ -70,7 +102,7 @@ namespace RallyKnowledgeOwlIntegration
 
         private string MapStatus(RallyArtifact artifact, IList<RallyIteration> iterations)
         {
-            var state = (string) artifact.c_CrossroadsKanbanState;
+            var state = (string) artifact.KanbanState;
             switch (state)
             {
                 case "Developing":
@@ -81,12 +113,12 @@ namespace RallyKnowledgeOwlIntegration
                     
                 case "Done":
                     // TODO: What should we do if iteration is null, it would be in this list always
-                    if (artifact.Iteration == null)
+                    if (artifact.IterationName == null)
                     {
                         return "Deployed";
                     }
 
-                    var iteration = iterations.FirstOrDefault(x => x.Name == artifact.Iteration.Name);
+                    var iteration = iterations.FirstOrDefault(x => x.Name == artifact.IterationName);
                     if (iteration == null)
                     {
                         return "Deployed";
@@ -112,6 +144,7 @@ namespace RallyKnowledgeOwlIntegration
 
             var prodSupportQuery = new Query("c_ProdSupportTeam", Query.Operator.Equals, "true");
 
+            // TODO: Filter out completed items not in an iteration
             var allIterations = new Query("Iteration.Name", Query.Operator.Equals, "");
             foreach (var iteration in iterations)
             {

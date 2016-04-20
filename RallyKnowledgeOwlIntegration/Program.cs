@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Linq;
 
 namespace RallyKnowledgeOwlIntegration
 {
@@ -7,11 +6,13 @@ namespace RallyKnowledgeOwlIntegration
     {
         static void Main(string[] args)
         {
+            AutoMapperConfig.RegisterMappings();
+
             var rally = new RallyDataService();
-            var result = rally.LoadStoriesAndDefects();
+            var artifacts = rally.LoadArtifactsByState();            
 
             var knowledgeOwl = new KnowledgeOwlDataService();
-            knowledgeOwl.UpdateBacklogArticle(result);
+            knowledgeOwl.UpdateBacklogArticle(artifacts);
         }
     }
 }

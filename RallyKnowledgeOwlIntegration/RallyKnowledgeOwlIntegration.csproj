@@ -71,15 +71,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArticleDto.cs" />
-    <Compile Include="Helpers\AutomapperHelper.cs" />
+    <Compile Include="AutoMapperConfig.cs" />
+    <Compile Include="Helpers\AutoMapperHelper.cs" />
     <Compile Include="KnowledgeOwlDataService.cs" />
+    <Compile Include="Models\RallyIterationProfile.cs" />
+    <Compile Include="Models\RallyArtifactProfile.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Helpers\RallyApiHelper.cs" />
-    <Compile Include="RallyArtifact.cs" />
+    <Compile Include="Models\RallyArtifact.cs" />
+    <Compile Include="Models\RallyArtifactsByState.cs" />
     <Compile Include="RallyDataService.cs" />
-    <Compile Include="RallyIteration.cs" />
-    <Compile Include="RallyArtifactIteration.cs" />
+    <Compile Include="Models\RallyIteration.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -1,32 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
-using RallyKnowledgeOwlIntegration.Models;
 using RestSharp;
 using RestSharp.Authenticators;
+using log4net;
+using RallyKnowledgeOwlIntegration.Models;
 
 namespace RallyKnowledgeOwlIntegration
 {
     class KnowledgeOwlDataService
     {
+        private readonly ILog _logger = LogManager.GetLogger(typeof(KnowledgeOwlDataService));
+
         public void UpdateBacklogArticle(RallyArtifactsByState artifactsByState)
-        {
-            //TODO pull out constants - URL, API key used to authenticate, and article ID (used in PUT)
+        {            
+            string apiKey = Environment.GetEnvironmentVariable("KNOWLEDGE_OWL_API_KEY");
+            string articleId = Environment.GetEnvironmentVariable("KNOWLEDGE_OWL_ARTICLE_ID");
+            
             var knowledgeOwlRestClient = new RestClient("https://app.knowledgeowl.com/api/head/");
-            knowledgeOwlRestClient.Authenticator = new HttpBasicAuthenticator("5616973c32131cf20f30cc56", "AnyFooBarPassword");
+            knowledgeOwlRestClient.Authenticator = new HttpBasicAuthenticator(apiKey, "AnyFooBarPassword");
             if (knowledgeOwlRestClient == null) throw new ArgumentNullException(nameof(knowledgeOwlRestClient));
 
-            //TODO Get verbaige from OCM to put at top of article
-            var header =
-                "{\"current_version\": {\"en\": {\"text\":\"<p>(**Placehoder text from OCM to describe the article.)</p><p><a href='%5B%5Bhg-id:57177b6632131cd43b6a2394%5D%5D' title='IT Prioritization'>IT Prioritization</a>&nbsp;</p><p></p>";
+            //TODO Get verbaige from OCM to put at top of article            
+            var header = "{\"current_version\": {\"en\": {\"text\":\"<p>(**Placehoder text from OCM to describe the article.)</p><p><a href='%5B%5Bhg-id:57177b6632131cd43b6a2394%5D%5D' title='IT Prioritization'>IT Prioritization</a>&nbsp;</p><p></p>";
             var footer = "\"}}}";
 
             var backlogTable = CreateTable(artifactsByState.Backlog);
             var currentTable = CreateTable(artifactsByState.CurrentIteration);
             var previousTable = CreateTable(artifactsByState.PreviousIterations);
-
             var body = header + currentTable + "<br/>" + previousTable + backlogTable + "<br/>"  + footer;
 
-            var urlPut = string.Format("article/{0}.json", "5717912932131c4f466a22e3");
+            var urlPut = string.Format("article/{0}.json", articleId);
             var requestPut = new RestRequest(urlPut, Method.PUT);
             requestPut.Parameters.Clear();
             requestPut.RequestFormat = DataFormat.Json;
@@ -34,7 +37,11 @@ namespace RallyKnowledgeOwlIntegration
             requestPut.AddHeader("content-type", "application/json");                   
             requestPut.AddParameter("application/json", body, ParameterType.RequestBody);
             var responsePut = knowledgeOwlRestClient.Execute(requestPut);
+
+            //TODO error handling/logging - need to log content results
+            var content = responsePut.Content;
             var response = responsePut.StatusCode;
+            _logger.Debug(content);
         }
 
         private static string CreateTable(List<RallyArtifact> artifacts)

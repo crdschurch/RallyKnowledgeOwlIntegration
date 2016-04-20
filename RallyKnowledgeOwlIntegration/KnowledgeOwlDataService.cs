@@ -7,7 +7,7 @@ namespace RallyKnowledgeOwlIntegration
 {
     class KnowledgeOwlDataService
     {
-        public void UpdateBacklogArticle(List<dynamic> result)
+        public void UpdateBacklogArticle(IEnumerable<RallyArtifact> result)
         {
             //TODO pull out constants - URL, API key used to authenticate, and article ID (used in PUT)
             var knowledgeOwlRestClient = new RestClient("https://app.knowledgeowl.com/api/head/");
@@ -21,8 +21,9 @@ namespace RallyKnowledgeOwlIntegration
 
             //TODO Make sure Iteration, status and Release Date come back from Rally inside of result list                    
             foreach (var item in result)
-            {                
-                table += "<tr><td>" + item["FormattedID"] + "</td><td>" + item["Name"] + "</td><td>?Status?</td><td>" + item["Iteration"] +"</td><td>?Date?</td></tr>"; 
+            {
+                var iterationName = item.Iteration != null ? item.Iteration.Name : string.Empty;
+                table += "<tr><td>" + item.FormattedID + "</td><td>" + item.Name + "</td><td>" + item.Status + "</td><td>" + iterationName + "</td><td>?Date?</td></tr>"; 
             }
             var body = header + table.Replace("\"", "'") + footer;
             

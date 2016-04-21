@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using Rally.RestApi;
 using RallyKnowledgeOwlIntegration.Helpers;
 using RallyKnowledgeOwlIntegration.Models;
@@ -77,11 +78,11 @@ namespace RallyKnowledgeOwlIntegration
 
         private IList<RallyArtifact> QueryArtifact(RallyRestApi restApi, IEnumerable<RallyIteration> iterations)
         {
-            var request = new Request("SchedulableArtifact");
-            // TODO: Need iteration name, and rank (is this DragAndDropRank?)
-            // TODO: Implement sorting by rank
-            request.Fetch = new List<string>() { "Name", "FormattedID", "ScheduleState", "c_CrossroadsKanbanState", "Priority", "c_PriorityUS", "Iteration" };
+            var request = new Request("Artifact");
+            request.Fetch = new List<string>() { "Name", "FormattedID", "ScheduleState", "c_CrossroadsKanbanState", "Priority", "c_PriorityUS", "Iteration", "DragAndDropRank"};
             request.Query = GetDefectAndStoryQuery(iterations);
+            request.AddParameter("types", "hierarchicalrequirement,defect");
+            request.Order = "DragAndDropRank";
 
             request.ProjectScopeDown = true;
             request.ProjectScopeUp = true;
@@ -104,7 +105,6 @@ namespace RallyKnowledgeOwlIntegration
 
         private DateTime? CalculateTargetDate(RallyArtifact result, RallyIteration iteration)
         {
-            // TODO: Add target Release data processing. Should we be looking at both status and iteration? 
             if (result.Status == "Backlog")
             {
                 return null;
@@ -115,9 +115,7 @@ namespace RallyKnowledgeOwlIntegration
                 return null;
             }
 
-            
-
-            if (iteration.StartDate <= DateTime.Today && DateTime.Today <= iteration.EndDate)
+            if (iteration.StartDate <= DateTime.Today)
             {
                 // TODO: Make this configurable
                 return iteration.EndDate.AddDays(3);
@@ -171,15 +169,13 @@ namespace RallyKnowledgeOwlIntegration
 
         private Query GetDefectAndStoryQuery(IEnumerable<RallyIteration> iterations)
         {
-            var defectQuery = new Query("TypeDefOid", Query.Operator.Equals, "22244455275");
-            var userStoriesQuery = new Query("TypeDefOid", Query.Operator.Equals, "22244455200");
-
             var prodSupportQuery = new Query("c_ProdSupportTeam", Query.Operator.Equals, "true");
 
             var unscheduledIterationsQuery = new Query("Iteration.Name", Query.Operator.Equals, "");
             var notAcceptedQuery = new Query("ScheduleState", Query.Operator.DoesNotEqual, "Accepted");
+            var notCompletedQuery = new Query("ScheduleState", Query.Operator.DoesNotEqual, "Completed");
 
-            var allIterations = unscheduledIterationsQuery.And(notAcceptedQuery);
+            var allIterations = unscheduledIterationsQuery.And(notAcceptedQuery).And(notCompletedQuery);
 
             foreach (var iteration in iterations)
             {
@@ -187,8 +183,7 @@ namespace RallyKnowledgeOwlIntegration
                 allIterations = allIterations.Or(sprintsQuery);
             }
 
-            var backlogQuery = defectQuery.Or(userStoriesQuery);
-            var completeQuery = prodSupportQuery.And(backlogQuery).And(allIterations);
+            var completeQuery = prodSupportQuery.And(allIterations);
             return completeQuery;
         }
     }

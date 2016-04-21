@@ -176,8 +176,11 @@ namespace RallyKnowledgeOwlIntegration
 
             var prodSupportQuery = new Query("c_ProdSupportTeam", Query.Operator.Equals, "true");
 
-            // TODO: Filter out completed items not in an iteration
-            var allIterations = new Query("Iteration.Name", Query.Operator.Equals, "");
+            var unscheduledIterationsQuery = new Query("Iteration.Name", Query.Operator.Equals, "");
+            var notAcceptedQuery = new Query("ScheduleState", Query.Operator.DoesNotEqual, "Accepted");
+
+            var allIterations = unscheduledIterationsQuery.And(notAcceptedQuery);
+
             foreach (var iteration in iterations)
             {
                 var sprintsQuery = new Query("Iteration.Name", Query.Operator.Equals, iteration.Name);

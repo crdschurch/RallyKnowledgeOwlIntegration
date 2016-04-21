@@ -74,7 +74,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArticleLanguage.cs" />
     <Compile Include="ArticleDto.cs" />
+    <Compile Include="ArticleCurrentVersion.cs" />
     <Compile Include="Helpers\AutoMapperConfig.cs" />
     <Compile Include="Helpers\AutoMapperHelper.cs" />
     <Compile Include="KnowledgeOwlDataService.cs" />

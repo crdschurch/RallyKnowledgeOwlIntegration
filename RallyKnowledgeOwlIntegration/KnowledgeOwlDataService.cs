@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using RestSharp;
 using RestSharp.Authenticators;
 using log4net;
@@ -20,48 +21,59 @@ namespace RallyKnowledgeOwlIntegration
             knowledgeOwlRestClient.Authenticator = new HttpBasicAuthenticator(apiKey, "AnyFooBarPassword");
             if (knowledgeOwlRestClient == null) throw new ArgumentNullException(nameof(knowledgeOwlRestClient));
 
-            //TODO Get verbaige from OCM to put at top of article            
-            var header = "{\"current_version\": {\"en\": {\"text\":\"<p>(**Placehoder text from OCM to describe the article.)</p><p><a href='%5B%5Bhg-id:57177b6632131cd43b6a2394%5D%5D' title='IT Prioritization'>IT Prioritization</a>&nbsp;</p><p></p>";
-            var footer = "\"}}}";
-
             var backlogTable = CreateTable(artifactsByState.Backlog);
             var currentTable = CreateTable(artifactsByState.CurrentIteration);
             var previousTable = CreateTable(artifactsByState.PreviousIterations);
-            var body = header + currentTable + "<br/>" + previousTable + backlogTable + "<br/>"  + footer;
+
+            StringBuilder sbBodyHtml = new StringBuilder();            
+            sbBodyHtml.Append("{\"current_version\": {\"en\": {\"text\":\"<p><a href='%5B%5Bhg-id:57177b6632131cd43b6a2394%5D%5D' title='IT Prioritization'>IT Prioritization</a>&nbsp;</p><p>(Placehoder text from OCM to describe the article.)</p><p></p>");
+            //sbBodyHtml.Append("{\"current_version\": {\"en\": {\"text\":\"<p><a href='%5B%5Bhg-id:57177b6632131cd43b6a2394%5D%5D' title='IT Prioritization'>IT Prioritization</a>&nbsp;</p><p>(Placehoder text from OCM to describe the article.)</p><p></p>");
+            sbBodyHtml.Append(currentTable);
+            sbBodyHtml.Append("<p>(Placehoder text from OCM to describe the article.)</p>");
+            sbBodyHtml.Append(previousTable);
+            sbBodyHtml.Append("<p>(Placehoder text from OCM to describe the article.)</p>");
+            sbBodyHtml.Append(backlogTable);
+            sbBodyHtml.Append("\"}}}");            
 
             var urlPut = string.Format("article/{0}.json", articleId);
             var requestPut = new RestRequest(urlPut, Method.PUT);
             requestPut.Parameters.Clear();
             requestPut.RequestFormat = DataFormat.Json;
             requestPut.AddHeader("accept", "application/json, text/plain, */*");
-            requestPut.AddHeader("content-type", "application/json");                   
-            requestPut.AddParameter("application/json", body, ParameterType.RequestBody);
-            var responsePut = knowledgeOwlRestClient.Execute(requestPut);
+            requestPut.AddHeader("content-type", "application/json");
+            requestPut.AddParameter("application/json", sbBodyHtml.ToString(), ParameterType.RequestBody);
 
-            //TODO error handling/logging - need to log content results
-            var content = responsePut.Content;
-            var response = responsePut.StatusCode;
-            _logger.Debug(content);
+            //var article = new ArticleDto();
+            //article.CurrentVersion.Language.Text = sbBodyHtml.ToString(); //null pointers
+            //requestPut.AddJsonBody(article); //serializes the object automatically
+
+            var responsePut = knowledgeOwlRestClient.Execute(requestPut);
+            _logger.Debug(responsePut.Content);
         }
 
         private static string CreateTable(List<RallyArtifact> artifacts)
         {
-            var tableHeader =
-                "<table align = 'center' border = '1' bordercolor = '#ccc' cellpadding = '5' cellspacing = '0' class='table table-small-font table-condensed table-bordered table-responsive' style='border-collapse:collapse;'><thead><tr><th scope = 'col'>ID</th><th scope='col'>Name&nbsp;</th><th scope = 'col' >Status&nbsp;</th><th scope = 'col'> Iteration</th><th scope='col'>Target Deployment Date</th></tr></thead><tbody>";
-
-            var table = "";
-            var tableFooter = "</tbody></table>";            
-
-            //TODO Make sure Iteration, status and Release Date come back from Rally inside of result list                    
+            StringBuilder sbHtmlTable = new StringBuilder();
+            sbHtmlTable.Append("<table align = 'center' border = '1' bordercolor = '#ccc' cellpadding = '5' cellspacing = '0' class='table table-small-font table-condensed table-bordered table-responsive' style='border-collapse:collapse;'><thead><tr><th scope = 'col'>ID</th><th scope='col'>Name&nbsp;</th><th scope = 'col' >Status&nbsp;</th><th scope = 'col'> Iteration</th><th scope='col'>Target Deployment Date</th></tr></thead><tbody>");
+            StringBuilder sbRallyContent = new StringBuilder();
             foreach (var item in artifacts)
             {
                 var targetDate = item.TargetDate.HasValue ? item.TargetDate.Value.ToShortDateString() : string.Empty;
-                table += "<tr><td>" + item.FormattedId + "</td><td>" + item.Name + "</td><td>" + item.Status + "</td><td>" +
-                         item.IterationName + "</td><td>" + targetDate + "</td></tr>";
-            }
 
-            table = tableHeader + table.Replace("\"", "'") + tableFooter;
-            return table;
+                sbRallyContent.Append("<tr><td>");
+                sbRallyContent.Append(item.FormattedId);
+                sbRallyContent.Append("</td><td>");
+                sbRallyContent.Append(item.Name);
+                sbRallyContent.Append("</td><td>");
+                sbRallyContent.Append(item.Status);
+                sbRallyContent.Append("</td><td>");
+                sbRallyContent.Append(item.IterationName);
+                sbRallyContent.Append("</td><td>");
+                sbRallyContent.Append(targetDate);
+            }
+            sbHtmlTable.Append(sbRallyContent.ToString().Replace("\"", "'"));
+            sbHtmlTable.Append("</tbody></table>");
+            return sbHtmlTable.ToString();
         }
     }
 }

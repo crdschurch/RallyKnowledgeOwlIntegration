@@ -1,5 +1,6 @@
 ﻿using RallyKnowledgeOwlIntegration.Helpers;
 
+[assembly: log4net.Config.XmlConfigurator(Watch = true)]
 namespace RallyKnowledgeOwlIntegration
 {
     class Program

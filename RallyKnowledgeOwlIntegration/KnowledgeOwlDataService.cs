@@ -60,6 +60,7 @@ namespace RallyKnowledgeOwlIntegration
             StringBuilder sbRallyContent = new StringBuilder();
             foreach (var item in artifacts)
             {
+<<<<<<< HEAD
                 sbRallyContent.Append("<tr><td>");
                 sbRallyContent.Append(item.FormattedId);
                 sbRallyContent.Append("</td><td>");
@@ -69,6 +70,11 @@ namespace RallyKnowledgeOwlIntegration
                 sbRallyContent.Append("</td><td>");
                 sbRallyContent.Append(item.IterationName);
                 sbRallyContent.Append("</td><td>?Date?</td></tr>");
+=======
+                var targetDate = item.TargetDate.HasValue ? item.TargetDate.Value.ToShortDateString() : string.Empty;
+                table += "<tr><td>" + item.FormattedId + "</td><td>" + item.Name + "</td><td>" + item.Status + "</td><td>" +
+                         item.IterationName + "</td><td>" + targetDate + "</td></tr>";
+>>>>>>> 124d4b8f444341aa4f268ec5fc7c8db0fc8540c4
             }
             //sbHtmlTable.Append(sbRallyContent.ToString().Replace("\"", "'"));
             sbHtmlTable.Append("</tbody></table>");

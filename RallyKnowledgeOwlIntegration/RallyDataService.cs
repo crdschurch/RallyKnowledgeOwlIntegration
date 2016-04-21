@@ -30,8 +30,6 @@ namespace RallyKnowledgeOwlIntegration
         {
             var artifactsByState = new RallyArtifactsByState();
 
-            //var allItemsWithIteration = artifacts.Where(x => String.IsNullOrWhiteSpace(x.IterationName) == false);
-
             // TODO: Determine if we need to use offset here
             var previous = iterations.Where(x => x.EndDate < DateTime.Today).Select(x => x.Name);
             artifactsByState.PreviousIterations = artifacts.Where(x => previous.Contains(x.IterationName)).ToList();
@@ -81,6 +79,7 @@ namespace RallyKnowledgeOwlIntegration
         {
             var request = new Request("SchedulableArtifact");
             // TODO: Need iteration name, and rank (is this DragAndDropRank?)
+            // TODO: Implement sorting by rank
             request.Fetch = new List<string>() { "Name", "FormattedID", "ScheduleState", "c_CrossroadsKanbanState", "Priority", "c_PriorityUS", "Iteration" };
             request.Query = GetDefectAndStoryQuery(iterations);
 
@@ -96,11 +95,49 @@ namespace RallyKnowledgeOwlIntegration
         {
             foreach (var result in results)
             {
-                result.Status = MapStatus(result, iterations);
+                var iteration = GetIteration(result, iterations);
+                result.Status = CalculateStatus(result, iteration);
+                result.TargetDate = CalculateTargetDate(result, iteration);
+                
             }
         }
 
-        private string MapStatus(RallyArtifact artifact, IList<RallyIteration> iterations)
+        private DateTime? CalculateTargetDate(RallyArtifact result, RallyIteration iteration)
+        {
+            // TODO: Add target Release data processing. Should we be looking at both status and iteration? 
+            if (result.Status == "Backlog")
+            {
+                return null;
+            }
+
+            if (iteration == null)
+            {
+                return null;
+            }
+
+            
+
+            if (iteration.StartDate <= DateTime.Today && DateTime.Today <= iteration.EndDate)
+            {
+                // TODO: Make this configurable
+                return iteration.EndDate.AddDays(3);
+            }
+
+            return null;
+        }
+
+        private RallyIteration GetIteration(RallyArtifact artifact, IList<RallyIteration> iterations)
+        {
+            if (artifact.IterationName == null)
+            {
+                return null;
+            }
+
+            var iteration = iterations.FirstOrDefault(x => x.Name == artifact.IterationName);
+            return iteration;            
+        }
+
+        private string CalculateStatus(RallyArtifact artifact, RallyIteration iteration)
         {
             var state = (string) artifact.KanbanState;
             switch (state)
@@ -113,12 +150,7 @@ namespace RallyKnowledgeOwlIntegration
                     
                 case "Done":
                     // TODO: What should we do if iteration is null, it would be in this list always
-                    if (artifact.IterationName == null)
-                    {
-                        return "Deployed";
-                    }
-
-                    var iteration = iterations.FirstOrDefault(x => x.Name == artifact.IterationName);
+                    // May need to handle removing this as part of query                    
                     if (iteration == null)
                     {
                         return "Deployed";
@@ -144,8 +176,11 @@ namespace RallyKnowledgeOwlIntegration
 
             var prodSupportQuery = new Query("c_ProdSupportTeam", Query.Operator.Equals, "true");
 
-            // TODO: Filter out completed items not in an iteration
-            var allIterations = new Query("Iteration.Name", Query.Operator.Equals, "");
+            var unscheduledIterationsQuery = new Query("Iteration.Name", Query.Operator.Equals, "");
+            var notAcceptedQuery = new Query("ScheduleState", Query.Operator.DoesNotEqual, "Accepted");
+
+            var allIterations = unscheduledIterationsQuery.And(notAcceptedQuery);
+
             foreach (var iteration in iterations)
             {
                 var sprintsQuery = new Query("Iteration.Name", Query.Operator.Equals, iteration.Name);

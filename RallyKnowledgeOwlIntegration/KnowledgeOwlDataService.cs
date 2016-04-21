@@ -54,9 +54,10 @@ namespace RallyKnowledgeOwlIntegration
 
             //TODO Make sure Iteration, status and Release Date come back from Rally inside of result list                    
             foreach (var item in artifacts)
-            {                
+            {
+                var targetDate = item.TargetDate.HasValue ? item.TargetDate.Value.ToShortDateString() : string.Empty;
                 table += "<tr><td>" + item.FormattedId + "</td><td>" + item.Name + "</td><td>" + item.Status + "</td><td>" +
-                         item.IterationName + "</td><td>?Date?</td></tr>";
+                         item.IterationName + "</td><td>" + targetDate + "</td></tr>";
             }
 
             table = tableHeader + table.Replace("\"", "'") + tableFooter;

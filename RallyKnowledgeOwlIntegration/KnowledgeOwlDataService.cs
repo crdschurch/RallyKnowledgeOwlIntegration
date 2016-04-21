@@ -41,15 +41,13 @@ namespace RallyKnowledgeOwlIntegration
             requestPut.RequestFormat = DataFormat.Json;
             requestPut.AddHeader("accept", "application/json, text/plain, */*");
             requestPut.AddHeader("content-type", "application/json");
-            // requestPut.AddParameter("application/json", sbBodyHtml.ToString(), ParameterType.RequestBody);
-            //requestPut.AddJsonBody(new {content = sbBodyHtml.ToString()}); //serializes the object automatically
+            requestPut.AddParameter("application/json", sbBodyHtml.ToString(), ParameterType.RequestBody);
 
-            var article = new ArticleDto();
-            article.CurrentVersion.Language.Text = sbBodyHtml.ToString();
-            requestPut.AddJsonBody(article); //serializes the object automatically
+            //var article = new ArticleDto();
+            //article.CurrentVersion.Language.Text = sbBodyHtml.ToString(); //null pointers
+            //requestPut.AddJsonBody(article); //serializes the object automatically
 
             var responsePut = knowledgeOwlRestClient.Execute(requestPut);
-            _logger.Debug(responsePut.StatusCode);
             _logger.Debug(responsePut.Content);
         }
 
@@ -60,7 +58,8 @@ namespace RallyKnowledgeOwlIntegration
             StringBuilder sbRallyContent = new StringBuilder();
             foreach (var item in artifacts)
             {
-<<<<<<< HEAD
+                var targetDate = item.TargetDate.HasValue ? item.TargetDate.Value.ToShortDateString() : string.Empty;
+
                 sbRallyContent.Append("<tr><td>");
                 sbRallyContent.Append(item.FormattedId);
                 sbRallyContent.Append("</td><td>");
@@ -69,14 +68,10 @@ namespace RallyKnowledgeOwlIntegration
                 sbRallyContent.Append(item.Status);
                 sbRallyContent.Append("</td><td>");
                 sbRallyContent.Append(item.IterationName);
-                sbRallyContent.Append("</td><td>?Date?</td></tr>");
-=======
-                var targetDate = item.TargetDate.HasValue ? item.TargetDate.Value.ToShortDateString() : string.Empty;
-                table += "<tr><td>" + item.FormattedId + "</td><td>" + item.Name + "</td><td>" + item.Status + "</td><td>" +
-                         item.IterationName + "</td><td>" + targetDate + "</td></tr>";
->>>>>>> 124d4b8f444341aa4f268ec5fc7c8db0fc8540c4
+                sbRallyContent.Append("</td><td>");
+                sbRallyContent.Append(targetDate);
             }
-            //sbHtmlTable.Append(sbRallyContent.ToString().Replace("\"", "'"));
+            sbHtmlTable.Append(sbRallyContent.ToString().Replace("\"", "'"));
             sbHtmlTable.Append("</tbody></table>");
             return sbHtmlTable.ToString();
         }

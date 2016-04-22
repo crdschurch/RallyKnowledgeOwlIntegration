@@ -97,12 +97,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArticleLanguage.cs" />
-    <Compile Include="ArticleDto.cs" />
-    <Compile Include="ArticleCurrentVersion.cs" />
+    <Compile Include="Models\ArticleLanguage.cs" />
+    <Compile Include="Models\ArticleDto.cs" />
+    <Compile Include="Models\ArticleCurrentVersion.cs" />
     <Compile Include="Helpers\AutoMapperConfig.cs" />
     <Compile Include="Helpers\AutoMapperHelper.cs" />
-    <Compile Include="KnowledgeOwlDataService.cs" />
+    <Compile Include="Services\KnowledgeOwlDataService.cs" />
     <Compile Include="Models\RallyIterationProfile.cs" />
     <Compile Include="Models\RallyArtifactProfile.cs" />
     <Compile Include="Program.cs" />
@@ -110,7 +110,7 @@
     <Compile Include="Helpers\RallyApiHelper.cs" />
     <Compile Include="Models\RallyArtifact.cs" />
     <Compile Include="Models\RallyArtifactsByState.cs" />
-    <Compile Include="RallyDataService.cs" />
+    <Compile Include="Services\RallyDataService.cs" />
     <Compile Include="Models\RallyIteration.cs" />
   </ItemGroup>
   <ItemGroup>

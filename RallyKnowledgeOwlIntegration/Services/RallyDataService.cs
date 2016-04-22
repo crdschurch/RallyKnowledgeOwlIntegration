@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using Rally.RestApi;
 using RallyKnowledgeOwlIntegration.Helpers;
 using RallyKnowledgeOwlIntegration.Models;
 
-namespace RallyKnowledgeOwlIntegration
+namespace RallyKnowledgeOwlIntegration.Services
 {
     public class RallyDataService
     {
@@ -41,11 +40,7 @@ namespace RallyKnowledgeOwlIntegration
                                       x.StartDate <= DateTime.Today).Select(x => x.Name);
 
             artifactsByState.CurrentIteration =
-                artifacts.Where(x =>
-                {
-                    Console.WriteLine(x.IterationName);
-                    return current.Contains(x.IterationName);
-                }).ToList();
+                artifacts.Where(x => current.Contains(x.IterationName)).ToList();
 
             artifactsByState.Backlog =
                 artifacts.Where(x => previous.Contains(x.IterationName) == false &&

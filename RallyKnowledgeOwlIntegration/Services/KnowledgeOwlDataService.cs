@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using RestSharp;
-using RestSharp.Authenticators;
 using log4net;
 using RallyKnowledgeOwlIntegration.Models;
+using RestSharp;
+using RestSharp.Authenticators;
 
-namespace RallyKnowledgeOwlIntegration
+namespace RallyKnowledgeOwlIntegration.Services
 {
     class KnowledgeOwlDataService
     {

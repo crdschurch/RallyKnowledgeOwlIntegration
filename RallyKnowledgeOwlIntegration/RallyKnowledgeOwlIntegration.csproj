@@ -99,7 +99,7 @@
   <ItemGroup>
     <Compile Include="Models\ArticleBody.cs" />
     <Compile Include="Models\Article.cs" />
-    <Compile Include="Models\ArticleLanguage.cs" />
+    <Compile Include="Models\ArticleLanguages.cs" />
     <Compile Include="Helpers\AutoMapperConfig.cs" />
     <Compile Include="Helpers\AutoMapperHelper.cs" />
     <Compile Include="Services\KnowledgeOwlDataService.cs" />

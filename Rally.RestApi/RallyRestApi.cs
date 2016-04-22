@@ -1223,8 +1223,8 @@ namespace Rally.RestApi
 			{
 				if (retryCounter < 10)
 				{
-					Thread.Sleep(retrySleepTime * retryCounter);
-					return DoGet(uri, true, retryCounter++);
+					Thread.Sleep(retrySleepTime);
+					return DoGet(uri, true, retryCounter+1);
 				}
 				throw;
 			}

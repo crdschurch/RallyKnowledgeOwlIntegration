@@ -67,6 +67,7 @@ namespace RallyKnowledgeOwlIntegration.Services
         {
             StringBuilder sbBodyHtml = new StringBuilder();
             sbBodyHtml.Append("<p>The following chart shows the backlog of work being done by the IT Team divided into three sections.</p><p>Section 1: Stories that were completed in the last sprint</br>Section 2: Stories that are currently being worked</br>Section 3: The remaining backlog of work to be done</br></p><p>All stories are prioritized based on impact and urgency. The <a href='%5B%5Bhg-id:57177b6632131cd43b6a2394%5D%5D' title='IT Prioritization'>IT Prioritization</a>&nbsp; article outlines how those decisions are made.</p><p></p>");
+            sbBodyHtml.Append("<p><strong>Section 1: Stories that were completed in the last sprint&nbsp;</strong></p>");
             sbBodyHtml.Append(tablePreviousSprint);
             sbBodyHtml.Append("<p><strong>Section 2: Stories that are currently being worked&nbsp;</strong></p>");
             sbBodyHtml.Append(tableCurrentSprint);

@@ -9,6 +9,8 @@ namespace RallyKnowledgeOwlIntegration.Services
 {
     public class RallyDataService
     {
+        private const int DeploymentOffsetInDays = 3;
+
         public RallyArtifactsByState LoadArtifactsByState()
         {
             string apiKey = Environment.GetEnvironmentVariable("RALLY_API_KEY");
@@ -29,12 +31,10 @@ namespace RallyKnowledgeOwlIntegration.Services
         private RallyArtifactsByState GroupByStates(IList<RallyArtifact> artifacts, IList<RallyIteration> iterations)
         {
             var artifactsByState = new RallyArtifactsByState();
-
-            // TODO: Determine if we need to use offset here
+            
             var previous = iterations.Where(x => x.EndDate < DateTime.Today).Select(x => x.Name);
             artifactsByState.PreviousIterations = artifacts.Where(x => previous.Contains(x.IterationName)).ToList();
-
-            // TODO: Determine if we need to use offset here
+            
             var current =
                 iterations.Where(x => x.EndDate >= DateTime.Today &&
                                       x.StartDate <= DateTime.Today).Select(x => x.Name);
@@ -112,8 +112,7 @@ namespace RallyKnowledgeOwlIntegration.Services
 
             if (iteration.StartDate <= DateTime.Today)
             {
-                // TODO: Make this configurable
-                return iteration.EndDate.AddDays(3);
+                return iteration.EndDate.AddDays(DeploymentOffsetInDays);
             }
 
             return null;
@@ -142,15 +141,12 @@ namespace RallyKnowledgeOwlIntegration.Services
                     return "In-Progress";
                     
                 case "Done":
-                    // TODO: What should we do if iteration is null, it would be in this list always
-                    // May need to handle removing this as part of query                    
                     if (iteration == null)
                     {
                         return "Deployed";
                     }
 
-                    // TODO: Does this need to be EndDate + deploymentOffset?
-                    if (iteration.EndDate < DateTime.Today)
+                    if (iteration.EndDate.AddDays(DeploymentOffsetInDays) <= DateTime.Today)
                     {
                         return "Deployed";
                     }

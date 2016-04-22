@@ -8,13 +8,13 @@ namespace RallyKnowledgeOwlIntegration
 {
     class Program
     {
-        private static readonly ILog _logger = LogManager.GetLogger(typeof(Program));
+        private static readonly ILog Logger = LogManager.GetLogger(typeof(Program));
 
         static void Main(string[] args)
         {
             try
             {
-                _logger.Info("Starting process");
+                Logger.Info("Starting process");
                 AutoMapperConfig.RegisterMappings();
 
                 var rally = new RallyDataService();
@@ -23,11 +23,11 @@ namespace RallyKnowledgeOwlIntegration
                 var knowledgeOwl = new KnowledgeOwlDataService();
                 knowledgeOwl.UpdateBacklogArticle(artifacts);
 
-                _logger.Info("Finished process successfully");
+                Logger.Info("Finished process successfully");
             }
             catch (Exception ex)
             {
-                _logger.Error("Error running process due to exception", ex);
+                Logger.Error("Error running process due to exception", ex);
                 throw;
             }
         }

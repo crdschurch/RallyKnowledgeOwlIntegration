@@ -1,4 +1,5 @@
-﻿using RallyKnowledgeOwlIntegration.Helpers;
+﻿using Newtonsoft.Json;
+using RallyKnowledgeOwlIntegration.Helpers;
 
 [assembly: log4net.Config.XmlConfigurator(Watch = true)]
 namespace RallyKnowledgeOwlIntegration

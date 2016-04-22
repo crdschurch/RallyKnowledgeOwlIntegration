@@ -4,8 +4,12 @@ namespace RallyKnowledgeOwlIntegration
 {
     class ArticleCurrentVersion
     {
-        //knowledge owl crossroads/ministry platform project id
         [JsonProperty(PropertyName = "en")]
-        public ArticleLanguage Language { get; set; }
+        public ArticleLanguage en { get; set; }
+
+        public ArticleCurrentVersion()
+        {
+            en = new ArticleLanguage();
+        }
     }
 }

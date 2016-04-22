@@ -16,7 +16,6 @@ namespace RallyKnowledgeOwlIntegration
         {            
             string apiKey = Environment.GetEnvironmentVariable("KNOWLEDGE_OWL_API_KEY");
             string articleId = Environment.GetEnvironmentVariable("KNOWLEDGE_OWL_ARTICLE_ID");
-            
             var knowledgeOwlRestClient = new RestClient("https://app.knowledgeowl.com/api/head/");
             knowledgeOwlRestClient.Authenticator = new HttpBasicAuthenticator(apiKey, "AnyFooBarPassword");
             if (knowledgeOwlRestClient == null) throw new ArgumentNullException(nameof(knowledgeOwlRestClient));
@@ -25,28 +24,16 @@ namespace RallyKnowledgeOwlIntegration
             var currentTable = CreateTable(artifactsByState.CurrentIteration);
             var previousTable = CreateTable(artifactsByState.PreviousIterations);
 
-            StringBuilder sbBodyHtml = new StringBuilder();            
-            sbBodyHtml.Append("{\"current_version\": {\"en\": {\"text\":\"<p><a href='%5B%5Bhg-id:57177b6632131cd43b6a2394%5D%5D' title='IT Prioritization'>IT Prioritization</a>&nbsp;</p><p>(Placehoder text from OCM to describe the article.)</p><p></p>");
-            //sbBodyHtml.Append("{\"current_version\": {\"en\": {\"text\":\"<p><a href='%5B%5Bhg-id:57177b6632131cd43b6a2394%5D%5D' title='IT Prioritization'>IT Prioritization</a>&nbsp;</p><p>(Placehoder text from OCM to describe the article.)</p><p></p>");
-            sbBodyHtml.Append(currentTable);
-            sbBodyHtml.Append("<p>(Placehoder text from OCM to describe the article.)</p>");
-            sbBodyHtml.Append(previousTable);
-            sbBodyHtml.Append("<p>(Placehoder text from OCM to describe the article.)</p>");
-            sbBodyHtml.Append(backlogTable);
-            sbBodyHtml.Append("\"}}}");            
-
             var urlPut = string.Format("article/{0}.json", articleId);
             var requestPut = new RestRequest(urlPut, Method.PUT);
             requestPut.Parameters.Clear();
             requestPut.RequestFormat = DataFormat.Json;
             requestPut.AddHeader("accept", "application/json, text/plain, */*");
             requestPut.AddHeader("content-type", "application/json");
-            requestPut.AddParameter("application/json", sbBodyHtml.ToString(), ParameterType.RequestBody);
 
-            //var article = new ArticleDto();
-            //article.CurrentVersion.Language.Text = sbBodyHtml.ToString(); //null pointers
-            //requestPut.AddJsonBody(article); //serializes the object automatically
-
+            var article = new ArticleDto();
+            article.current_version.en.text = CreateBody(previousTable, currentTable, backlogTable);
+            requestPut.AddJsonBody(article); //serializes the object automatically
             var responsePut = knowledgeOwlRestClient.Execute(requestPut);
             _logger.Debug(responsePut.Content);
         }
@@ -74,6 +61,18 @@ namespace RallyKnowledgeOwlIntegration
             sbHtmlTable.Append(sbRallyContent.ToString().Replace("\"", "'"));
             sbHtmlTable.Append("</tbody></table>");
             return sbHtmlTable.ToString();
+        }
+
+        private static string CreateBody(string tablePreviousSprint, string tableCurrentSprint, string tableBacklog)
+        {
+            StringBuilder sbBodyHtml = new StringBuilder();
+            sbBodyHtml.Append("<p><a href='%5B%5Bhg-id:57177b6632131cd43b6a2394%5D%5D' title='IT Prioritization'>IT Prioritization</a>&nbsp;</p><p>(Placehoder text from OCM to describe the article.)</p><p></p>");
+            sbBodyHtml.Append(tablePreviousSprint);
+            sbBodyHtml.Append("<p>(Placehoder text from OCM to describe the article.)</p>");
+            sbBodyHtml.Append(tableCurrentSprint);
+            sbBodyHtml.Append("<p>(Placehoder text from OCM to describe the article.)</p>");
+            sbBodyHtml.Append(tableBacklog);
+            return sbBodyHtml.ToString();
         }
     }
 }

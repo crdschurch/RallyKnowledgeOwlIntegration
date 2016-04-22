@@ -2,7 +2,7 @@
 
 namespace RallyKnowledgeOwlIntegration.Models
 {
-    class ArticleLanguage
+    public class ArticleBody
     {
         [JsonProperty(PropertyName = "text")]
         public string text { get; set; }

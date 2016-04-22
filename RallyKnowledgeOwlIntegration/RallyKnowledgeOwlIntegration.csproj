@@ -97,9 +97,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\ArticleBody.cs" />
+    <Compile Include="Models\Article.cs" />
     <Compile Include="Models\ArticleLanguage.cs" />
-    <Compile Include="Models\ArticleDto.cs" />
-    <Compile Include="Models\ArticleCurrentVersion.cs" />
     <Compile Include="Helpers\AutoMapperConfig.cs" />
     <Compile Include="Helpers\AutoMapperHelper.cs" />
     <Compile Include="Services\KnowledgeOwlDataService.cs" />

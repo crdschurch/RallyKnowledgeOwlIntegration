@@ -31,7 +31,7 @@ namespace RallyKnowledgeOwlIntegration.Services
             requestPut.AddHeader("accept", "application/json, text/plain, */*");
             requestPut.AddHeader("content-type", "application/json");
 
-            var article = new ArticleDto();
+            var article = new Article();
             article.current_version.en.text = CreateBody(previousTable, currentTable, backlogTable);
             requestPut.AddJsonBody(article); //serializes the object automatically
             var responsePut = knowledgeOwlRestClient.Execute(requestPut);

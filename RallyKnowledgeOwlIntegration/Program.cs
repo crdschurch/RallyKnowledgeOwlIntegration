@@ -6,11 +6,11 @@ using RallyKnowledgeOwlIntegration.Services;
 [assembly: log4net.Config.XmlConfigurator(Watch = true)]
 namespace RallyKnowledgeOwlIntegration
 {
-    class Program
+    public class Program
     {
         private static readonly ILog Logger = LogManager.GetLogger(typeof(Program));
 
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             try
             {

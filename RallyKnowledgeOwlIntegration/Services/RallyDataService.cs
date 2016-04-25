@@ -168,9 +168,9 @@ namespace RallyKnowledgeOwlIntegration.Services
 
             var notDefectQuery = new Query("TypeDefOid", Query.Operator.DoesNotEqual, "22244455275");
             var notClosedQuery = new Query("State", Query.Operator.DoesNotEqual, "Closed");
-            var notDefectOrNotClosedDefect = notDefectQuery.Or(notClosedQuery);
+            var notClosedDefectQuery = notDefectQuery.Or(notClosedQuery);
 
-            var allIterations = unscheduledIterationsQuery.And(notAcceptedQuery).And(notCompletedQuery).And(notDefectOrNotClosedDefect);
+            var allIterations = unscheduledIterationsQuery.And(notAcceptedQuery).And(notCompletedQuery).And(notClosedDefectQuery);
 
             foreach (var iteration in iterations)
             {
